@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.steeplesoft</groupId>
+    <artifactId>jreleaser-demo</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>JReleaser Demo</name>
+    <description>JReleaser demo</description>
+    <url>https://github.com/jasondlee/jreleaser-demo</url>
+
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <version.tamboui>0.4.0</version.tamboui>
+
+        <mainClass>com.steeplesoft.jreleaserdemo.JReleaserDemo</mainClass>
+        <scm.connection>git@github.com:jasondlee/jreleaser-demo.git</scm.connection>
+    </properties>
+
+    <developers>
+        <developer>
+            <id>jasondlee</id>
+            <name>Jason Lee</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:${scm.connection}</connection>
+        <developerConnection>scm:git:${scm.connection}</developerConnection>
+        <url>https://github.com/jasondlee/jreleaser-demo</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.tamboui</groupId>
+                <artifactId>tamboui-bom</artifactId>
+                <version>${version.tamboui}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>dev.tamboui</groupId>
+            <artifactId>tamboui-toolkit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.tamboui</groupId>
+            <artifactId>tamboui-panama-backend</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <mainClass>${mainClass}</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <properties>
+                <altDeploymentRepository>local::file:./target/staging-deploy</altDeploymentRepository>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jreleaser</groupId>
+                        <artifactId>jreleaser-maven-plugin</artifactId>
+                        <version>1.25.0</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>release</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>full-release</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <jreleaser>
+                                <project>
+                                    <inceptionYear>2026</inceptionYear>
+                                    <languages>
+                                        <java>
+                                            <mainClass>${mainClass}</mainClass>
+                                        </java>
+                                    </languages>
+                                </project>
+                                <release>
+                                    <github>
+                                        <owner>jasondlee</owner>
+                                        <overwrite>true</overwrite>
+                                        <branch>master</branch>
+                                        <changelog>
+                                            <formatted>ALWAYS</formatted>
+                                            <preset>conventional-commits</preset>
+                                            <contributors>
+                                                <enabled>false</enabled>
+                                            </contributors>
+                                        </changelog>
+                                    </github>
+                                </release>
+                                <distributions>
+                                    <jreleaser-demo>
+                                        <type>SINGLE_JAR</type>
+                                        <artifacts>
+                                            <artifact>
+                                                <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                                            </artifact>
+                                        </artifacts>
+                                        <jbang>
+                                            <active>ALWAYS</active>
+                                        </jbang>
+                                    </jreleaser-demo>
+                                </distributions>
+                                <signing>
+                                    <pgp>
+                                        <active>ALWAYS</active>
+                                        <armored>true</armored>
+                                    </pgp>
+                                </signing>
+                                <deploy>
+                                    <maven>
+                                        <mavenCentral>
+                                            <sonatype>
+                                                <active>ALWAYS</active>
+                                                <url>https://central.sonatype.com/api/v1/publisher</url>
+                                                <stage>UPLOAD</stage>
+                                                <stagingRepositories>${project.build.directory}/staging-deploy</stagingRepositories>
+                                            </sonatype>
+                                        </mavenCentral>
+                                    </maven>
+                                </deploy>
+                            </jreleaser>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
